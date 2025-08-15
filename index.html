@@ -7,90 +7,108 @@
 		<meta name="description" content="Tự động chuyển hướng đến App Store hoặc Google Play cho ứng dụng SayGo." />
 		<style>
 			:root { color-scheme: light dark; }
-			body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; display: grid; place-items: center; min-height: 100vh; }
-			.card { max-width: 720px; padding: 24px; margin: 16px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); }
-			h1 { font-size: 1.25rem; margin: 0 0 12px; }
-			p { margin: 6px 0; opacity: 0.9; }
-			.links { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
-			.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; text-decoration: none; font-weight: 600; border: 1px solid rgba(0,0,0,0.1); }
-			.btn:active { transform: translateY(1px); }
-			.store { background: #f6f8fa; }
-			.play { background: #e9f7ef; }
-			.muted { font-size: 0.9rem; opacity: 0.7; }
+			body {
+				font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+				margin: 0; padding: 0;
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				background: #fff;
+			}
+			.title {
+				color: #f9d46a;
+				font-size: 4rem;
+				font-weight: 700;
+				text-align: center;
+				margin-bottom: 80px;
+				margin-top: 60px;
+				font-family: inherit;
+			}
+			.store-links {
+				display: flex;
+				gap: 60px;
+				justify-content: center;
+				margin-top: 40px;
+			}
+			.store-badge {
+				height: 120px;
+				width: auto;
+				transition: transform 0.1s;
+				box-shadow: 0 2px 8px 0 rgba(0,0,0,0.12);
+				border-radius: 22px;
+			}
+			.store-badge:active {
+				transform: scale(0.97);
+			}
 		</style>
 	</head>
 	<body>
-		<div class="card">
-			<h1 id="status">Đang kiểm tra thiết bị của bạn…</h1>
-			<p class="muted">Nếu không tự chuyển hướng, hãy chọn cửa hàng ứng dụng bên dưới.</p>
-			<div id="links" class="links" hidden>
-				<a class="btn store" href="https://apps.apple.com/vn/app/saygo/id6748329632" rel="noopener" id="apple-link">Mở trên App Store</a>
-				<a class="btn play" href="https://play.google.com/store/apps/details?id=vn.saygo" rel="noopener" id="play-link">Mở trên Google Play</a>
-			</div>
-			<noscript>
-				<p>Trình duyệt của bạn đang tắt JavaScript. Vui lòng mở một trong các liên kết sau:</p>
-				<div class="links">
-					<a class="btn store" href="https://apps.apple.com/vn/app/saygo/id6748329632" rel="noopener">App Store</a>
-					<a class="btn play" href="https://play.google.com/store/apps/details?id=vn.saygo" rel="noopener">Google Play</a>
-				</div>
-			</noscript>
+		<div class="title">Tải ứng dụng ngay</div>
+		<div class="store-links">
+			<a href="https://apps.apple.com/vn/app/saygo/id6748329632" rel="noopener" id="apple-link">
+				<img class="store-badge" src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" />
+			</a>
+			<a href="https://play.google.com/store/apps/details?id=vn.saygo" rel="noopener" id="play-link">
+				<img class="store-badge" src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" />
+			</a>
 		</div>
+		<noscript>
+			<div class="store-links" style="margin-top:40px;">
+				<a href="https://apps.apple.com/vn/app/saygo/id6748329632" rel="noopener">
+					<img class="store-badge" src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" />
+				</a>
+				<a href="https://play.google.com/store/apps/details?id=vn.saygo" rel="noopener">
+					<img class="store-badge" src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" />
+				</a>
+			</div>
+		</noscript>
+			<script>
+				// Tự động phát hiện HĐH và chuyển hướng đến cửa hàng tương ứng
+				(function () {
+					var APP_STORE_URL = 'https://apps.apple.com/vn/app/saygo/id6748329632';
+					var PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=vn.saygo';
 
-		<script>
-			(function() {
-				const APP_STORE_URL = 'https://apps.apple.com/vn/app/saygo/id6748329632';
-				const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=vn.saygo';
-
-				function isAndroid(ua) {
-					return /Android/i.test(ua);
-				}
-
-				function isIOS(ua) {
-					// iPhone/iPad/iPod + iPadOS 13+ (UA như macOS nhưng có cảm ứng)
-					const iDevice = /iPhone|iPad|iPod/i.test(ua);
-					const iPadOS = /Macintosh/.test(ua) && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1;
-					return iDevice || iPadOS;
-				}
-
-				function redirect(url) {
-					try {
-						// replace để không thêm vào lịch sử quay lại
-						window.location.replace(url);
-					} catch (_) {
-						window.location.href = url;
-					}
-				}
-
-				function run() {
-					const ua = navigator.userAgent || navigator.vendor || window.opera || '';
-					const statusEl = document.getElementById('status');
-					const linksEl = document.getElementById('links');
-
-					if (isAndroid(ua)) {
-						statusEl.textContent = 'Phát hiện thiết bị Android — đang chuyển hướng đến Google Play…';
-						redirect(PLAY_STORE_URL);
-						return;
+					function isAndroid(ua) {
+						return /Android/i.test(ua);
 					}
 
-					if (isIOS(ua)) {
-						statusEl.textContent = 'Phát hiện thiết bị iOS — đang chuyển hướng đến App Store…';
-						redirect(APP_STORE_URL);
-						return;
+							function isIOS(ua) {
+								// Tính cả macOS như iOS theo yêu cầu
+								return /(iPhone|iPad|iPod|Macintosh|Mac OS X)/i.test(ua);
+							}
+
+					function redirect(url) {
+						try {
+							window.location.replace(url);
+						} catch (e) {
+							window.location.href = url;
+						}
 					}
 
-					// Desktop hoặc hệ điều hành khác: hiển thị liên kết thủ công
-					statusEl.textContent = 'Không phải thiết bị di động? Hãy chọn cửa hàng ứng dụng:';
-					linksEl.hidden = false;
-				}
+					function run() {
+						var ua = navigator.userAgent || navigator.vendor || window.opera || '';
+						if (isAndroid(ua)) {
+							redirect(PLAY_STORE_URL);
+							return;
+						}
+						if (isIOS(ua)) {
+							redirect(APP_STORE_URL);
+							return;
+						}
+						// Desktop hoặc HĐH khác: giữ nguyên trang với badge để người dùng chọn thủ công
+					}
 
-				// Chạy ngay khi DOM sẵn sàng
-				if (document.readyState === 'loading') {
-					document.addEventListener('DOMContentLoaded', run);
-				} else {
-					run();
-				}
-			})();
-		</script>
+					if (document.readyState === 'loading') {
+						document.addEventListener('DOMContentLoaded', run);
+					} else {
+						run();
+					}
+				})();
+			</script>
+
+		<!-- No JS needed for this static landing page style -->
 	</body>
 	</html>
 
